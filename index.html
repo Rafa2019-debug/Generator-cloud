@@ -4,7 +4,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ELITE PRO MAX TRUE CLONE V4</title>
+<title>ELITE PRO MAX TRUE CLONE V5</title>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -85,6 +85,11 @@ function nextElite(value){
       num = num - last3 + 5000 + (last3 - 990 + 5);
   }
 
+  // ===== x50 & x51 => +18 =====
+  else if(last2 === 50 || last2 === 51){
+      num += 18;
+  }
+
   // ===== x40–x42 => +17 =====
   else if(last2 >= 40 && last2 <= 42){
       num += 17;
@@ -157,7 +162,7 @@ textarea{height:300px;}
 </div>
 
 <div class="card" id="appBox" style="display:none;">
-<div class="title">🔥 ELITE PRO MAX TRUE CLONE V4</div>
+<div class="title">🔥 ELITE PRO MAX TRUE CLONE V5</div>
 
 <textarea id="startNumbers" placeholder="Masukkan kode awal, pisahkan enter"></textarea>
 <input type="number" id="count" value="1000" placeholder="Jumlah per kode">
