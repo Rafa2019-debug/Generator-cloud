@@ -4,7 +4,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ELITE PRO MAX LOCKED</title>
+<title>ELITE PRO MAX TRUE CLONE</title>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -71,22 +71,21 @@ function nextElite(value){
   let len = full.length;
   let num = parseInt(full);
 
-  let last3 = num % 1000;
   let last2 = num % 100;
+  let last3 = num % 1000;
 
-  if(last2 >= 40 && last2 <= 49){
-    num += 7;
+  if(last3 >= 990 && last3 <= 999){
+      let newBase = num - last3 + 1000;
+      num = newBase + 3;
   }
-  else if(last3 >= 990 && last3 <= 999){
-    let ribuan = Math.floor((num % 10000) / 1000);
-    if(ribuan === 4){
-      num += 15;
-    } else {
-      num += 16;
-    }
+  else if(last2 === 21 || last2 === 70){
+      num += 18;
+  }
+  else if(last2 === 47 || last2 === 45){
+      num += 7;
   }
   else{
-    num += 8;
+      num += 8;
   }
 
   return prefix + num.toString().padStart(len,'0');
@@ -180,7 +179,7 @@ textarea{
 </div>
 
 <div class="card" id="appBox" style="display:none;">
-<div class="title">🔥 Generator Angka ELITE PRO MAX</div>
+<div class="title">🔥 ELITE PRO MAX TRUE CLONE</div>
 
 <textarea id="startNumbers" placeholder="Masukkan kode awal, pisahkan enter"></textarea>
 
