@@ -4,7 +4,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ELITE PRO MAX TRUE CLONE V5</title>
+<title>ELITE PRO MAX TRUE CLONE V6</title>
+
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -73,16 +75,30 @@ function nextElite(value){
 
   let last3 = num % 1000;
   let last2 = num % 100;
-  let hundredBlock = Math.floor(last3 / 100);
+
+  // ===== 000,100,...,900 => +18 =====
+  if(last3 % 100 === 0){
+      num += 18;
+  }
 
   // ===== 0990–0998 pattern =====
-  if(last3 >= 990 && last3 <= 998 && hundredBlock !== 4){
+  else if(last3 >= 990 && last3 <= 998 && Math.floor(last3/100) !== 4){
       num = num - last3 + 1000 + (last3 - 990 + 6);
   }
 
-  // ===== 4990–4998 special pattern =====
-  else if(last3 >= 990 && last3 <= 998 && hundredBlock === 4){
+  // ===== 4990–4998 special =====
+  else if(last3 >= 990 && last3 <= 998 && Math.floor(last3/100) === 4){
       num = num - last3 + 5000 + (last3 - 990 + 5);
+  }
+
+  // ===== Override 01–19 => +8 =====
+  else if(last2 >= 1 && last2 <= 19){
+      num += 8;
+  }
+
+  // ===== Override 27 & 35 => +8 =====
+  else if(last2 === 27 || last2 === 35){
+      num += 8;
   }
 
   // ===== x50 & x51 => +18 =====
@@ -140,6 +156,14 @@ window.copyAll = function(){
   alert("Hasil generator disalin!");
 }
 
+window.downloadXLSX = function(){
+  const data = document.getElementById("result").value.trim().split("\n").map(v => [v]);
+  const ws = XLSX.utils.aoa_to_sheet(data);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Generator");
+  XLSX.writeFile(wb, "hasil_generator.xlsx");
+}
+
 </script>
 
 <style>
@@ -162,13 +186,14 @@ textarea{height:300px;}
 </div>
 
 <div class="card" id="appBox" style="display:none;">
-<div class="title">🔥 ELITE PRO MAX TRUE CLONE V5</div>
+<div class="title">🔥 ELITE PRO MAX TRUE CLONE V6</div>
 
 <textarea id="startNumbers" placeholder="Masukkan kode awal, pisahkan enter"></textarea>
 <input type="number" id="count" value="1000" placeholder="Jumlah per kode">
 
 <button onclick="generateNumbers()">Generate</button>
 <button onclick="copyAll()">Copy Hasil Generator</button>
+<button onclick="downloadXLSX()">Download XLSX</button>
 
 <div id="totalInfo" style="margin-top:10px;font-weight:bold;"></div>
 <textarea id="result"></textarea>
