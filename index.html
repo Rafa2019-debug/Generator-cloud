@@ -4,7 +4,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ELITE PRO MAX TRUE CLONE V6</title>
+<title>ELITE PRO MAX TRUE CLONE V8</title>
 
 <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 
@@ -29,7 +29,6 @@ async function checkDeviceLock(user){
     deviceId = crypto.randomUUID();
     localStorage.setItem("device_id", deviceId);
   }
-
   const ref = doc(db, "userDevices", user.uid);
   const snap = await getDoc(ref);
 
@@ -37,30 +36,24 @@ async function checkDeviceLock(user){
     await setDoc(ref, { deviceId: deviceId });
     return true;
   }
-
   if(snap.data().deviceId !== deviceId){
     alert("Akun aktif di device lain!");
     await signOut(auth);
     return false;
   }
-
   return true;
 }
 
 window.loginUser = async function(){
   const email = document.getElementById("email").value;
   const password = document.getElementById("password").value;
-
   try{
     const cred = await signInWithEmailAndPassword(auth, email, password);
     const allowed = await checkDeviceLock(cred.user);
     if(!allowed) return;
-
     document.getElementById("loginBox").style.display="none";
     document.getElementById("appBox").style.display="block";
-  }catch(e){
-    alert("Login gagal");
-  }
+  }catch(e){ alert("Login gagal"); }
 }
 
 function nextElite(value){
@@ -81,42 +74,51 @@ function nextElite(value){
       num += 18;
   }
 
-  // ===== 0990–0998 pattern =====
+  // ===== 011,021,...,091 => +18 =====
+  else if(last2 % 10 === 1 && last2 !== 1){
+      num += 18;
+  }
+
+  // ===== 010,020,...,090 => +18 =====
+  else if(last2 % 10 === 0 && last2 !== 0){
+      num += 18;
+  }
+
+  // ===== 0990–0998 =====
   else if(last3 >= 990 && last3 <= 998 && Math.floor(last3/100) !== 4){
       num = num - last3 + 1000 + (last3 - 990 + 6);
   }
 
-  // ===== 4990–4998 special =====
+  // ===== 4990–4998 =====
   else if(last3 >= 990 && last3 <= 998 && Math.floor(last3/100) === 4){
       num = num - last3 + 5000 + (last3 - 990 + 5);
   }
 
-  // ===== Override 01–19 => +8 =====
+  // ===== 01–19 => +8 =====
   else if(last2 >= 1 && last2 <= 19){
       num += 8;
   }
 
-  // ===== Override 27 & 35 => +8 =====
+  // ===== 27 & 35 => +8 =====
   else if(last2 === 27 || last2 === 35){
       num += 8;
   }
 
-  // ===== x50 & x51 => +18 =====
+  // ===== 50 & 51 => +18 =====
   else if(last2 === 50 || last2 === 51){
       num += 18;
   }
 
-  // ===== x40–x42 => +17 =====
+  // ===== 40–42 => +17 =====
   else if(last2 >= 40 && last2 <= 42){
       num += 17;
   }
 
-  // ===== x43–x49 => +7 =====
+  // ===== 43–49 => +7 =====
   else if(last2 >= 43 && last2 <= 49){
       num += 7;
   }
 
-  // ===== DEFAULT +8 =====
   else{
       num += 8;
   }
@@ -125,24 +127,19 @@ function nextElite(value){
 }
 
 window.generateNumbers = function(){
-
   const inputs = document.getElementById("startNumbers").value.trim().split("\n");
   const count = parseInt(document.getElementById("count").value);
-
   let result = "";
   let total = 0;
 
   inputs.forEach(start=>{
-
     let current = start.trim();
     if(!current) return;
-
     for(let i=0;i<count;i++){
       result += current + "\n";
       current = nextElite(current);
       total++;
     }
-
   });
 
   document.getElementById("result").value = result;
@@ -163,7 +160,6 @@ window.downloadXLSX = function(){
   XLSX.utils.book_append_sheet(wb, ws, "Generator");
   XLSX.writeFile(wb, "hasil_generator.xlsx");
 }
-
 </script>
 
 <style>
@@ -186,10 +182,10 @@ textarea{height:300px;}
 </div>
 
 <div class="card" id="appBox" style="display:none;">
-<div class="title">🔥 ELITE PRO MAX TRUE CLONE V6</div>
+<div class="title">🔥 ELITE PRO MAX TRUE CLONE V8</div>
 
 <textarea id="startNumbers" placeholder="Masukkan kode awal, pisahkan enter"></textarea>
-<input type="number" id="count" value="1000" placeholder="Jumlah per kode">
+<input type="number" id="count" value="1000">
 
 <button onclick="generateNumbers()">Generate</button>
 <button onclick="copyAll()">Copy Hasil Generator</button>
