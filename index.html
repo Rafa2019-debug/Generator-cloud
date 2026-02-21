@@ -4,7 +4,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ELITE PRO MAX TRUE CLONE V8</title>
+<title>ELITE PRO MAX TRUE CLONE V9</title>
 
 <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 
@@ -68,19 +68,20 @@ function nextElite(value){
 
   let last3 = num % 1000;
   let last2 = num % 100;
+  let last2from3 = last3 % 100;
 
   // ===== 000,100,...,900 => +18 =====
   if(last3 % 100 === 0){
       num += 18;
   }
 
-  // ===== 011,021,...,091 => +18 =====
-  else if(last2 % 10 === 1 && last2 !== 1){
+  // ===== 011–091 => +18 =====
+  else if(last2from3 % 10 === 1 && last2from3 !== 1){
       num += 18;
   }
 
-  // ===== 010,020,...,090 => +18 =====
-  else if(last2 % 10 === 0 && last2 !== 0){
+  // ===== 010–090 => +18 =====
+  else if(last2from3 % 10 === 0 && last2from3 !== 0){
       num += 18;
   }
 
@@ -94,6 +95,21 @@ function nextElite(value){
       num = num - last3 + 5000 + (last3 - 990 + 5);
   }
 
+  // ===== 140–142,240–242,... => +17 =====
+  else if(last2from3 >= 40 && last2from3 <= 42){
+      num += 17;
+  }
+
+  // ===== 143–149,243–249,... => +7 =====
+  else if(last2from3 >= 43 && last2from3 <= 49){
+      num += 7;
+  }
+
+  // ===== 50 & 51 => +18 =====
+  else if(last2 === 50 || last2 === 51){
+      num += 18;
+  }
+
   // ===== 01–19 => +8 =====
   else if(last2 >= 1 && last2 <= 19){
       num += 8;
@@ -102,21 +118,6 @@ function nextElite(value){
   // ===== 27 & 35 => +8 =====
   else if(last2 === 27 || last2 === 35){
       num += 8;
-  }
-
-  // ===== 50 & 51 => +18 =====
-  else if(last2 === 50 || last2 === 51){
-      num += 18;
-  }
-
-  // ===== 40–42 => +17 =====
-  else if(last2 >= 40 && last2 <= 42){
-      num += 17;
-  }
-
-  // ===== 43–49 => +7 =====
-  else if(last2 >= 43 && last2 <= 49){
-      num += 7;
   }
 
   else{
@@ -182,7 +183,7 @@ textarea{height:300px;}
 </div>
 
 <div class="card" id="appBox" style="display:none;">
-<div class="title">🔥 ELITE PRO MAX TRUE CLONE V8</div>
+<div class="title">🔥 ELITE PRO MAX TRUE CLONE V9</div>
 
 <textarea id="startNumbers" placeholder="Masukkan kode awal, pisahkan enter"></textarea>
 <input type="number" id="count" value="1000">
