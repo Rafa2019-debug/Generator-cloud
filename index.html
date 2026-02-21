@@ -4,19 +4,63 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ELITE PRO MAX TRUE CLONE V11</title>
+<title>ELITE PRO MAX TRUE CLONE V12</title>
+
 <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 
-<style>
-body{font-family:Arial;background:#f4f6f9;padding:15px;}
-.card{background:white;padding:20px;border-radius:12px;max-width:600px;margin:auto;box-shadow:0 5px 20px rgba(0,0,0,0.1);}
-input,textarea,button{width:100%;padding:12px;margin-top:12px;border-radius:8px;border:1px solid #ccc;font-size:16px;}
-button{background:#1e88e5;color:white;border:none;font-weight:bold;}
-textarea{height:300px;}
-.title{font-weight:bold;font-size:18px;text-align:center;}
-</style>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyC_3DFpfBEwr7LVoYpfrHj5crtWqj9O2rk",
+  authDomain: "generator-angka-cloud.firebaseapp.com",
+  projectId: "generator-angka-cloud"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+async function checkDeviceLock(user){
+  let deviceId = localStorage.getItem("device_id");
+  if(!deviceId){
+    deviceId = crypto.randomUUID();
+    localStorage.setItem("device_id", deviceId);
+  }
+
+  const ref = doc(db, "userDevices", user.uid);
+  const snap = await getDoc(ref);
+
+  if(!snap.exists()){
+    await setDoc(ref, { deviceId: deviceId });
+    return true;
+  }
+
+  if(snap.data().deviceId !== deviceId){
+    alert("Akun aktif di device lain!");
+    await signOut(auth);
+    return false;
+  }
+
+  return true;
+}
+
+window.loginUser = async function(){
+  const email = document.getElementById("email").value;
+  const password = document.getElementById("password").value;
+  try{
+    const cred = await signInWithEmailAndPassword(auth, email, password);
+    const ok = await checkDeviceLock(cred.user);
+    if(!ok) return;
+    document.getElementById("loginBox").style.display="none";
+    document.getElementById("appBox").style.display="block";
+  }catch(e){
+    alert("Login gagal");
+  }
+}
+
 function nextElite(value){
 
   let prefix = value.replace(/\d+$/, "");
@@ -30,8 +74,33 @@ function nextElite(value){
   let last3 = num % 1000;
   let last2 = last3 % 100;
 
+  // ===== 040-042,140-142,...940-942 =====
+  if(last2 >= 40 && last2 <= 42){
+      num += 17;
+  }
+
+  // ===== 143-149,243-249,... =====
+  else if(last2 >= 43 && last2 <= 49){
+      num += 7;
+  }
+
+  // ===== 000,100,...900 =====
+  else if(last3 % 100 === 0){
+      num += 18;
+  }
+
+  // ===== 010-090 =====
+  else if(last2 % 10 === 0 && last2 !== 0){
+      num += 18;
+  }
+
+  // ===== EXACT 011,021,...091 =====
+  else if([11,21,31,41,51,61,71,81,91].includes(last2)){
+      num += 18;
+  }
+
   // ===== 0990–0998 =====
-  if(last3 >= 990 && last3 <= 998 && Math.floor(last3/100) !== 4){
+  else if(last3 >= 990 && last3 <= 998 && Math.floor(last3/100) !== 4){
       num = num - last3 + 1000 + (last3 - 990 + 6);
   }
 
@@ -40,32 +109,6 @@ function nextElite(value){
       num = num - last3 + 5000 + (last3 - 990 + 5);
   }
 
-  // ===== 000,100,...900 =====
-  else if(last3 % 100 === 0){
-      num += 18;
-  }
-
-  // ===== 010–090 =====
-  else if(last2 % 10 === 0 && last2 !== 0){
-      num += 18;
-  }
-
-  // ===== 140–142,240–242,... =====
-  else if(last2 >= 40 && last2 <= 42){
-      num += 17;
-  }
-
-  // ===== 143–149,243–249,... =====
-  else if(last2 >= 43 && last2 <= 49){
-      num += 7;
-  }
-
-  // ===== EXACT 011,021,...091 =====
-  else if([11,21,31,41,51,61,71,81,91].includes(last2)){
-      num += 18;
-  }
-
-  // ===== DEFAULT =====
   else{
       num += 8;
   }
@@ -73,7 +116,7 @@ function nextElite(value){
   return prefix + num.toString().padStart(len,'0');
 }
 
-function generateNumbers(){
+window.generateNumbers = function(){
   const inputs = document.getElementById("startNumbers").value.trim().split("\n");
   const count = parseInt(document.getElementById("count").value);
   let result = "";
@@ -93,14 +136,14 @@ function generateNumbers(){
   document.getElementById("totalInfo").innerText = "Total Generated: " + total;
 }
 
-function copyAll(){
+window.copyAll = function(){
   const textarea = document.getElementById("result");
   textarea.select();
   document.execCommand("copy");
   alert("Hasil generator disalin!");
 }
 
-function downloadXLSX(){
+window.downloadXLSX = function(){
   const data = document.getElementById("result").value.trim().split("\n").map(v => [v]);
   const ws = XLSX.utils.aoa_to_sheet(data);
   const wb = XLSX.utils.book_new();
@@ -109,11 +152,27 @@ function downloadXLSX(){
 }
 </script>
 
+<style>
+body{font-family:Arial;background:#f4f6f9;padding:15px;}
+.card{background:white;padding:20px;border-radius:12px;max-width:600px;margin:auto;box-shadow:0 5px 20px rgba(0,0,0,0.1);}
+input,textarea,button{width:100%;padding:12px;margin-top:12px;border-radius:8px;border:1px solid #ccc;font-size:16px;}
+button{background:#1e88e5;color:white;border:none;font-weight:bold;}
+textarea{height:300px;}
+.title{font-weight:bold;font-size:18px;text-align:center;}
+</style>
 </head>
+
 <body>
 
-<div class="card">
-<div class="title">🔥 ELITE PRO MAX TRUE CLONE V11</div>
+<div class="card" id="loginBox">
+<div class="title">LOGIN</div>
+<input type="email" id="email" placeholder="Email">
+<input type="password" id="password" placeholder="Password">
+<button onclick="loginUser()">Login</button>
+</div>
+
+<div class="card" id="appBox" style="display:none;">
+<div class="title">🔥 ELITE PRO MAX TRUE CLONE V12</div>
 
 <textarea id="startNumbers" placeholder="Masukkan kode awal"></textarea>
 <input type="number" id="count" value="1000">
