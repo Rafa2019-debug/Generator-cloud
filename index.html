@@ -3,17 +3,16 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Generator Angka CORPORATE CLOUD</title>
+<title>Generator Angka - 1 Device Mode</title>
 
 <style>
 body { font-family: Arial; background:#f4f6f9; padding:20px; }
 .card { background:white; padding:25px; border-radius:12px; max-width:500px; margin:auto; box-shadow:0 8px 20px rgba(0,0,0,0.1);}
 input, textarea { width:100%; padding:10px; margin:8px 0; border-radius:6px; border:1px solid #ccc; }
 button { padding:10px 15px; margin-top:10px; cursor:pointer; border:none; border-radius:6px; background:#4CAF50; color:white; }
-.password-wrapper { position:relative; }
-.toggle-eye { position:absolute; right:10px; top:50%; transform:translateY(-50%); cursor:pointer; }
 .hidden { display:none; }
-h2 { margin-top:0; }
+.toggle-eye { position:absolute; right:10px; top:50%; transform:translateY(-50%); cursor:pointer; }
+.password-wrapper { position:relative; }
 </style>
 </head>
 <body>
@@ -42,24 +41,47 @@ h2 { margin-top:0; }
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyC_3DFpfBEwr7LVoYpfrHj5crtWqj9O2rk",
   authDomain: "generator-angka-cloud.firebaseapp.com",
-  projectId: "generator-angka-cloud",
-  storageBucket: "generator-angka-cloud.firebasestorage.app",
-  messagingSenderId: "1080690638698",
-  appId: "1:1080690638698:web:90c02836d5c963a0c0ef13"
+  projectId: "generator-angka-cloud"
 };
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
+const db = getFirestore(app);
+
+function getDeviceId(){
+  let id = localStorage.getItem("deviceId");
+  if(!id){
+    id = "DEV-" + Math.random().toString(36).substr(2,9);
+    localStorage.setItem("deviceId", id);
+  }
+  return id;
+}
 
 window.login = async function(){
   const email = document.getElementById("email").value;
   const password = document.getElementById("password").value;
+  const deviceId = getDeviceId();
+
   try{
-    await signInWithEmailAndPassword(auth, email, password);
+    const cred = await signInWithEmailAndPassword(auth, email, password);
+    const userRef = doc(db, "userDevices", cred.user.uid);
+    const snap = await getDoc(userRef);
+
+    if(!snap.exists()){
+      await setDoc(userRef, { deviceId: deviceId });
+    } else {
+      if(snap.data().deviceId !== deviceId){
+        await signOut(auth);
+        document.getElementById("loginMsg").innerText = "Akun sudah digunakan di device lain.";
+        return;
+      }
+    }
+
   }catch(e){
     document.getElementById("loginMsg").innerText = "Login gagal";
   }
