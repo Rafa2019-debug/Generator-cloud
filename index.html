@@ -1,133 +1,136 @@
-
 <!DOCTYPE html>
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Generator Angka - ELITE FINAL</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Generator Angka ELITE</title>
 
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-
-const firebaseConfig = {
-  apiKey: "AIzaSyC_3DFpfBEwr7LVoYpfrHj5crtWqj9O2rk",
-  authDomain: "generator-angka-cloud.firebaseapp.com",
-  projectId: "generator-angka-cloud",
-  storageBucket: "generator-angka-cloud.firebasestorage.app",
-  messagingSenderId: "1080690638698",
-  appId: "1:1080690638698:web:90c02836d5c963a0c0ef13"
-};
-
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
-
-async function checkDeviceLock(user) {
-  let deviceId = localStorage.getItem("device_id");
-  if (!deviceId) {
-    deviceId = crypto.randomUUID();
-    localStorage.setItem("device_id", deviceId);
-  }
-
-  const ref = doc(db, "userDevices", user.uid);
-  const snap = await getDoc(ref);
-
-  if (!snap.exists()) {
-    await setDoc(ref, { deviceId: deviceId, createdAt: new Date() });
-    return true;
-  }
-
-  const savedDevice = snap.data().deviceId;
-
-  if (savedDevice === deviceId) {
-    return true;
-  } else {
-    alert("Akun ini sudah aktif di device lain!");
-    await signOut(auth);
-    return false;
-  }
-}
-
-window.loginUser = async function() {
-  const email = document.getElementById("email").value;
-  const password = document.getElementById("password").value;
-
-  try {
-    const userCredential = await signInWithEmailAndPassword(auth, email, password);
-    const allowed = await checkDeviceLock(userCredential.user);
-    if (!allowed) return;
-
-    document.getElementById("loginBox").style.display = "none";
-    document.getElementById("generatorBox").style.display = "block";
-  } catch (error) {
-    alert("Login gagal!");
-  }
-}
-
-function eliteNext(numberStr) {
-  let prefix = numberStr.replace(/\d+$/, "");
-  let numericPart = numberStr.match(/\d+$/);
-  if (!numericPart) return numberStr;
-
-  let originalLength = numericPart[0].length;
-  let num = parseInt(numericPart[0]);
-  let lastThree = num % 1000;
-  let thousand = Math.floor(num / 1000);
-
-  if (lastThree >= 990 && lastThree <= 999) {
-    if (thousand === 4) {
-      num += 15; // 4990-4999 rule
-    } else {
-      num += 16; // other 990-999 rule
-    }
-  } else {
-    num += 8; // normal increment
-  }
-
-  return prefix + num.toString().padStart(originalLength, '0');
-}
-
-window.generateNumbers = function() {
-  const start = document.getElementById("startNumber").value.trim();
-  const count = parseInt(document.getElementById("count").value);
-  let current = start;
-  let output = "";
-
-  for (let i = 0; i < count; i++) {
-    output += current + "\n";
-    current = eliteNext(current);
-  }
-
-  document.getElementById("result").value = output;
-}
-</script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 
 <style>
-body { font-family: Arial; background: #f2f2f2; }
-.container { max-width: 450px; margin: auto; margin-top: 40px; background: white; padding: 25px; border-radius: 12px; }
-input, button, textarea { width: 100%; padding: 12px; margin-top: 12px; }
-button { background: green; color: white; border: none; font-weight: bold; }
-textarea { height: 250px; }
+body { font-family: Arial; padding:20px; background:#f0f2f5; }
+.container { background:white; padding:20px; border-radius:12px; max-width:900px; margin:auto; box-shadow:0 5px 15px rgba(0,0,0,0.1);}
+button { padding:10px 18px; font-size:14px; cursor:pointer; margin:5px 5px 5px 0; border:none; border-radius:6px; }
+.generate { background:#4CAF50; color:white; }
+.download { background:#FF9800; color:white; }
+textarea { width:100%; height:420px; margin-top:15px; font-family:monospace; }
+input { padding:8px; width:100%; margin-bottom:10px; }
+.info { margin-top:10px; font-size:14px; }
 </style>
 </head>
-
 <body>
 
-<div class="container" id="loginBox">
-<h2>Login</h2>
-<input type="email" id="email" placeholder="Email">
-<input type="password" id="password" placeholder="Password">
-<button onclick="loginUser()">Login</button>
+<div class="container">
+<h2>Generator Angka ELITE 🔥 (Support Huruf + Angka)</h2>
+
+<label>Kode Awal (contoh: 07KJ0010005 atau 07K10010005):</label>
+<input type="text" id="startVal" value="07KJ0010005">
+
+<label>Jumlah Data:</label>
+<input type="number" id="jumlah" value="100">
+
+<button class="generate" onclick="generate()">Generate</button>
+<button class="download" onclick="downloadXLSX()">Download XLSX</button>
+
+<div class="info" id="info"></div>
+<textarea id="output"></textarea>
 </div>
 
-<div class="container" id="generatorBox" style="display:none;">
-<h2>Generator Angka ELITE FINAL</h2>
-<input type="text" id="startNumber" placeholder="Contoh: 07KJ0010005">
-<input type="number" id="count" placeholder="Jumlah Data (1000 dll)">
-<button onclick="generateNumbers()">Generate</button>
-<textarea id="result"></textarea>
-</div>
+<script>
+
+let generatedArray = [];
+
+function splitCode(code){
+    let match = code.match(/^(.*?)(\d+)$/);
+    return {
+        prefix: match[1],
+        number: match[2]
+    };
+}
+
+function padNumber(num, length){
+    return num.toString().padStart(length, '0');
+}
+
+function generate(){
+
+    let input = document.getElementById("startVal").value.trim();
+    let jumlah = Number(document.getElementById("jumlah").value);
+
+    let parts = splitCode(input);
+    let prefix = parts.prefix;
+    let numStr = parts.number;
+
+    let current = parseInt(numStr);
+    let length = numStr.length;
+
+    let result = "";
+    generatedArray = [];
+
+    let startTime = Date.now();
+
+    for(let i=1; i<=jumlah; i++){
+
+        if(i === 1){
+            let full = prefix + padNumber(current, length);
+            result += full + "\n";
+            generatedArray.push([full]);
+            continue;
+        }
+
+        let last2 = current % 100;
+        let last3 = current % 1000;
+        let ribuan = Math.floor((current % 10000) / 1000);
+        let lastDigit = current % 10;
+
+        // ROLLOVER 990–999
+        if (last3 >= 990 && last3 <= 993) {
+            current += (ribuan === 4) ? 15 : 16;
+        }
+        else if (last3 >= 994 && last3 <= 999) {
+            current += (ribuan === 4) ? 5 : 6;
+        }
+        // 40–42 → +17
+        else if (last2 >= 40 && last2 <= 42) {
+            current += 17;
+        }
+        // 43–49 → +7
+        else if (last2 >= 43 && last2 <= 49) {
+            current += 7;
+        }
+        // Last digit 0 or 1 → +18
+        else if (lastDigit === 0 || lastDigit === 1) {
+            current += 18;
+        }
+        else {
+            current += 8;
+        }
+
+        let full = prefix + padNumber(current, length);
+        result += full + "\n";
+        generatedArray.push([full]);
+    }
+
+    let endTime = Date.now();
+
+    document.getElementById("output").value = result;
+    document.getElementById("info").innerHTML =
+        "Generated: <b>" + jumlah.toLocaleString() + "</b> kode | Waktu: " +
+        (endTime - startTime) + " ms";
+}
+
+function downloadXLSX(){
+    if(generatedArray.length === 0){
+        alert("Generate dulu!");
+        return;
+    }
+    let wb = XLSX.utils.book_new();
+    let ws = XLSX.utils.aoa_to_sheet(generatedArray);
+    XLSX.utils.book_append_sheet(wb, ws, "Data");
+    XLSX.writeFile(wb, "Generator_Angka_ELITE.xlsx");
+}
+
+</script>
 
 </body>
 </html>
