@@ -4,7 +4,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ELITE PRO MAX TRUE CLONE</title>
+<title>ELITE PRO MAX TRUE CLONE V3</title>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -21,6 +21,7 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
+// ================= DEVICE LOCK =================
 async function checkDeviceLock(user){
   let deviceId = localStorage.getItem("device_id");
   if(!deviceId){
@@ -61,6 +62,7 @@ window.loginUser = async function(){
   }
 }
 
+// ================= UPDATED ELITE ENGINE V3 =================
 function nextElite(value){
 
   let prefix = value.replace(/\d+$/, "");
@@ -74,16 +76,28 @@ function nextElite(value){
   let last2 = num % 100;
   let last3 = num % 1000;
 
+  // ===== ROLLOVER 990-999 =====
   if(last3 >= 990 && last3 <= 999){
       let newBase = num - last3 + 1000;
       num = newBase + 3;
   }
+
+  // ===== RULE 040–042 => +17 =====
+  else if(last3 >= 40 && last3 <= 42){
+      num += 17;
+  }
+
+  // ===== RULE 043–049 => +7 =====
+  else if(last3 >= 43 && last3 <= 49){
+      num += 7;
+  }
+
+  // ===== +18 PATTERN =====
   else if(last2 === 21 || last2 === 70){
       num += 18;
   }
-  else if(last2 === 47 || last2 === 45){
-      num += 7;
-  }
+
+  // ===== DEFAULT +8 =====
   else{
       num += 8;
   }
@@ -179,7 +193,7 @@ textarea{
 </div>
 
 <div class="card" id="appBox" style="display:none;">
-<div class="title">🔥 ELITE PRO MAX TRUE CLONE</div>
+<div class="title">🔥 ELITE PRO MAX TRUE CLONE V3</div>
 
 <textarea id="startNumbers" placeholder="Masukkan kode awal, pisahkan enter"></textarea>
 
