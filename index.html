@@ -1,149 +1,113 @@
+
 <!DOCTYPE html>
 <html>
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Generator Angka - 1 Device Mode</title>
-
-<style>
-body { font-family: Arial; background:#f4f6f9; padding:20px; }
-.card { background:white; padding:25px; border-radius:12px; max-width:500px; margin:auto; box-shadow:0 8px 20px rgba(0,0,0,0.1);}
-input, textarea { width:100%; padding:10px; margin:8px 0; border-radius:6px; border:1px solid #ccc; }
-button { padding:10px 15px; margin-top:10px; cursor:pointer; border:none; border-radius:6px; background:#4CAF50; color:white; }
-.hidden { display:none; }
-.toggle-eye { position:absolute; right:10px; top:50%; transform:translateY(-50%); cursor:pointer; }
-.password-wrapper { position:relative; }
-</style>
-</head>
-<body>
-
-<div class="card" id="loginCard">
-<h2>Login</h2>
-<input type="email" id="email" placeholder="Email">
-<div class="password-wrapper">
-<input type="password" id="password" placeholder="Password">
-<span class="toggle-eye" onclick="togglePassword()">👁</span>
-</div>
-<button onclick="login()">Login</button>
-<div id="loginMsg" style="color:red;"></div>
-</div>
-
-<div class="card hidden" id="appCard">
-<h2>Generator Angka</h2>
-<div id="userInfo"></div>
-<textarea id="startValue">16021330002</textarea>
-<input type="number" id="jumlah" value="100">
-<button onclick="generate()">Generate</button>
-<button onclick="logout()" style="background:#f44336;">Logout</button>
-<textarea id="output" style="height:200px;"></textarea>
-</div>
-
+<title>Generator Angka - Secure 1 Device</title>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getAuth, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyC_3DFpfBEwr7LVoYpfrHj5crtWqj9O2rk",
   authDomain: "generator-angka-cloud.firebaseapp.com",
-  projectId: "generator-angka-cloud"
+  projectId: "generator-angka-cloud",
+  storageBucket: "generator-angka-cloud.firebasestorage.app",
+  messagingSenderId: "1080690638698",
+  appId: "1:1080690638698:web:90c02836d5c963a0c0ef13"
 };
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-function getDeviceId(){
-  let id = localStorage.getItem("deviceId");
-  if(!id){
-    id = "DEV-" + Math.random().toString(36).substr(2,9);
-    localStorage.setItem("deviceId", id);
+async function checkDeviceLock(user) {
+  let deviceId = localStorage.getItem("device_id");
+  if (!deviceId) {
+    deviceId = crypto.randomUUID();
+    localStorage.setItem("device_id", deviceId);
   }
-  return id;
+
+  const ref = doc(db, "userDevices", user.uid);
+  const snap = await getDoc(ref);
+
+  if (!snap.exists()) {
+    await setDoc(ref, {
+      deviceId: deviceId,
+      createdAt: new Date()
+    });
+    return true;
+  }
+
+  const savedDevice = snap.data().deviceId;
+
+  if (savedDevice === deviceId) {
+    return true;
+  } else {
+    alert("Akun ini sudah aktif di device lain!");
+    await signOut(auth);
+    return false;
+  }
 }
 
-window.login = async function(){
+window.loginUser = async function() {
   const email = document.getElementById("email").value;
   const password = document.getElementById("password").value;
-  const deviceId = getDeviceId();
 
-  try{
-    const cred = await signInWithEmailAndPassword(auth, email, password);
-    const userRef = doc(db, "userDevices", cred.user.uid);
-    const snap = await getDoc(userRef);
+  try {
+    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    const user = userCredential.user;
 
-    if(!snap.exists()){
-      await setDoc(userRef, { deviceId: deviceId });
-    } else {
-      if(snap.data().deviceId !== deviceId){
-        await signOut(auth);
-        document.getElementById("loginMsg").innerText = "Akun sudah digunakan di device lain.";
-        return;
-      }
-    }
+    const allowed = await checkDeviceLock(user);
+    if (!allowed) return;
 
-  }catch(e){
-    document.getElementById("loginMsg").innerText = "Login gagal";
+    document.getElementById("loginBox").style.display = "none";
+    document.getElementById("generatorBox").style.display = "block";
+  } catch (error) {
+    alert("Login gagal!");
   }
 }
 
-window.logout = function(){
-  signOut(auth);
-}
+window.generateNumbers = function() {
+  const start = document.getElementById("startNumber").value;
+  const count = parseInt(document.getElementById("count").value);
+  let base = parseInt(start);
+  let output = "";
 
-onAuthStateChanged(auth, (user)=>{
-  if(user){
-    document.getElementById("loginCard").classList.add("hidden");
-    document.getElementById("appCard").classList.remove("hidden");
-    document.getElementById("userInfo").innerText = "Login sebagai: " + user.email;
-  } else {
-    document.getElementById("loginCard").classList.remove("hidden");
-    document.getElementById("appCard").classList.add("hidden");
-  }
-});
-
-window.generate = function(){
-  let start = document.getElementById("startValue").value.trim();
-  let jumlah = parseInt(document.getElementById("jumlah").value);
-  let match = start.match(/^(.*?)(\d+)$/);
-  if(!match) return;
-
-  let prefix = match[1];
-  let len = match[2].length;
-  let current = parseInt(match[2]);
-
-  let result = "";
-
-  function nextVal(n){
-    let last2=n%100;
-    let last3=n%1000;
-    let ribuan=Math.floor((n%10000)/1000);
-    let lastDigit=n%10;
-
-    if(last3>=990&&last3<=993) return n+((ribuan===4)?15:16);
-    if(last3>=994&&last3<=999) return n+((ribuan===4)?5:6);
-    if(last2>=40&&last2<=42) return n+17;
-    if(last2>=43&&last2<=49) return n+7;
-    if(lastDigit===0||lastDigit===1) return n+18;
-    return n+8;
+  for (let i = 0; i < count; i++) {
+    output += base + "\n";
+    base += 8;
   }
 
-  for(let i=0;i<jumlah;i++){
-    if(i>0) current=nextVal(current);
-    result += prefix + current.toString().padStart(len,'0') + "\n";
-  }
-
-  document.getElementById("output").value = result;
-}
-
-</script>
-
-<script>
-function togglePassword(){
-  const pass = document.getElementById("password");
-  pass.type = pass.type === "password" ? "text" : "password";
+  document.getElementById("result").value = output;
 }
 </script>
+
+<style>
+body { font-family: Arial; background: #f5f5f5; }
+.container { max-width: 400px; margin: auto; margin-top: 50px; background: white; padding: 20px; border-radius: 10px; }
+input, button, textarea { width: 100%; padding: 10px; margin-top: 10px; }
+button { background: green; color: white; border: none; cursor: pointer; }
+</style>
+</head>
+
+<body>
+
+<div class="container" id="loginBox">
+<h2>Login</h2>
+<input type="email" id="email" placeholder="Email">
+<input type="password" id="password" placeholder="Password">
+<button onclick="loginUser()">Login</button>
+</div>
+
+<div class="container" id="generatorBox" style="display:none;">
+<h2>Generator Angka</h2>
+<input type="text" id="startNumber" placeholder="Angka Awal">
+<input type="number" id="count" placeholder="Jumlah Data">
+<button onclick="generateNumbers()">Generate</button>
+<textarea id="result" rows="10"></textarea>
+</div>
 
 </body>
 </html>
