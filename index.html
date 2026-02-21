@@ -21,7 +21,6 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-// ================= DEVICE LOCK =================
 async function checkDeviceLock(user){
   let deviceId = localStorage.getItem("device_id");
   if(!deviceId){
@@ -62,7 +61,6 @@ window.loginUser = async function(){
   }
 }
 
-// ================= ELITE PRO MAX ENGINE =================
 function nextElite(value){
 
   let prefix = value.replace(/\d+$/, "");
@@ -76,12 +74,9 @@ function nextElite(value){
   let last3 = num % 1000;
   let last2 = num % 100;
 
-  // RULE 40-49 → +7
   if(last2 >= 40 && last2 <= 49){
     num += 7;
   }
-
-  // RULE 990-999
   else if(last3 >= 990 && last3 <= 999){
     let ribuan = Math.floor((num % 10000) / 1000);
     if(ribuan === 4){
@@ -90,8 +85,6 @@ function nextElite(value){
       num += 16;
     }
   }
-
-  // DEFAULT +8
   else{
     num += 8;
   }
@@ -128,7 +121,7 @@ window.copyAll = function(){
   const textarea = document.getElementById("result");
   textarea.select();
   document.execCommand("copy");
-  alert("Semua hasil disalin!");
+  alert("Hasil generator disalin!");
 }
 
 </script>
@@ -194,7 +187,7 @@ textarea{
 <input type="number" id="count" value="1000" placeholder="Jumlah per kode">
 
 <button onclick="generateNumbers()">Generate</button>
-<button onclick="copyAll()">Salin Total Generator</button>
+<button onclick="copyAll()">Copy Hasil Generator</button>
 
 <div id="totalInfo" style="margin-top:10px;font-weight:bold;"></div>
 
