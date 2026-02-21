@@ -1,0 +1,211 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ELITE PRO MAX TRUE CLONE V2</title>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyC_3DFpfBEwr7LVoYpfrHj5crtWqj9O2rk",
+  authDomain: "generator-angka-cloud.firebaseapp.com",
+  projectId: "generator-angka-cloud"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+// ================= DEVICE LOCK =================
+async function checkDeviceLock(user){
+  let deviceId = localStorage.getItem("device_id");
+  if(!deviceId){
+    deviceId = crypto.randomUUID();
+    localStorage.setItem("device_id", deviceId);
+  }
+
+  const ref = doc(db, "userDevices", user.uid);
+  const snap = await getDoc(ref);
+
+  if(!snap.exists()){
+    await setDoc(ref, { deviceId: deviceId });
+    return true;
+  }
+
+  if(snap.data().deviceId !== deviceId){
+    alert("Akun aktif di device lain!");
+    await signOut(auth);
+    return false;
+  }
+
+  return true;
+}
+
+window.loginUser = async function(){
+  const email = document.getElementById("email").value;
+  const password = document.getElementById("password").value;
+
+  try{
+    const cred = await signInWithEmailAndPassword(auth, email, password);
+    const allowed = await checkDeviceLock(cred.user);
+    if(!allowed) return;
+
+    document.getElementById("loginBox").style.display="none";
+    document.getElementById("appBox").style.display="block";
+  }catch(e){
+    alert("Login gagal");
+  }
+}
+
+// ================= UPDATED ELITE ENGINE =================
+function nextElite(value){
+
+  let prefix = value.replace(/\d+$/, "");
+  let match = value.match(/\d+$/);
+  if(!match) return value;
+
+  let full = match[0];
+  let len = full.length;
+  let num = parseInt(full);
+
+  let last2 = num % 100;
+  let last3 = num % 1000;
+
+  // ===== ROLLOVER 990-999 =====
+  if(last3 >= 990 && last3 <= 999){
+      let newBase = num - last3 + 1000;
+      num = newBase + 3;
+  }
+
+  // ===== RULE 40–42 => +17 =====
+  else if(last2 >= 40 && last2 <= 42){
+      num += 17;
+  }
+
+  // ===== RULE 43–49 => +7 =====
+  else if(last2 >= 43 && last2 <= 49){
+      num += 7;
+  }
+
+  // ===== +18 PATTERN =====
+  else if(last2 === 21 || last2 === 70){
+      num += 18;
+  }
+
+  // ===== DEFAULT +8 =====
+  else{
+      num += 8;
+  }
+
+  return prefix + num.toString().padStart(len,'0');
+}
+
+window.generateNumbers = function(){
+
+  const inputs = document.getElementById("startNumbers").value.trim().split("\n");
+  const count = parseInt(document.getElementById("count").value);
+
+  let result = "";
+  let total = 0;
+
+  inputs.forEach(start=>{
+
+    let current = start.trim();
+    if(!current) return;
+
+    for(let i=0;i<count;i++){
+      result += current + "\n";
+      current = nextElite(current);
+      total++;
+    }
+
+  });
+
+  document.getElementById("result").value = result;
+  document.getElementById("totalInfo").innerText = "Total Generated: " + total;
+}
+
+window.copyAll = function(){
+  const textarea = document.getElementById("result");
+  textarea.select();
+  document.execCommand("copy");
+  alert("Hasil generator disalin!");
+}
+
+</script>
+
+<style>
+body{
+  font-family:Arial;
+  background:#f4f6f9;
+  padding:15px;
+}
+
+.card{
+  background:white;
+  padding:20px;
+  border-radius:12px;
+  max-width:600px;
+  margin:auto;
+  box-shadow:0 5px 20px rgba(0,0,0,0.1);
+}
+
+input, textarea, button{
+  width:100%;
+  padding:12px;
+  margin-top:12px;
+  border-radius:8px;
+  border:1px solid #ccc;
+  font-size:16px;
+}
+
+button{
+  background:#1e88e5;
+  color:white;
+  border:none;
+  font-weight:bold;
+}
+
+textarea{
+  height:300px;
+}
+
+.title{
+  font-weight:bold;
+  font-size:18px;
+  text-align:center;
+}
+</style>
+</head>
+
+<body>
+
+<div class="card" id="loginBox">
+<div class="title">LOGIN</div>
+<input type="email" id="email" placeholder="Email">
+<input type="password" id="password" placeholder="Password">
+<button onclick="loginUser()">Login</button>
+</div>
+
+<div class="card" id="appBox" style="display:none;">
+<div class="title">🔥 ELITE PRO MAX TRUE CLONE V2</div>
+
+<textarea id="startNumbers" placeholder="Masukkan kode awal, pisahkan enter"></textarea>
+
+<input type="number" id="count" value="1000" placeholder="Jumlah per kode">
+
+<button onclick="generateNumbers()">Generate</button>
+<button onclick="copyAll()">Copy Hasil Generator</button>
+
+<div id="totalInfo" style="margin-top:10px;font-weight:bold;"></div>
+
+<textarea id="result"></textarea>
+</div>
+
+</body>
+</html>
