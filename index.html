@@ -1,196 +1,58 @@
 <!DOCTYPE html>
-<html>
+<html lang="id">
 <head>
 <meta charset="UTF-8">
+<title>Cek NIK Indonesia PRO</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>GENERATOR CLOUD ENTERPRISE</title>
-
-<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
-
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword, signOut } 
-from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-import { getFirestore, doc, getDoc, setDoc } 
-from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-
-
-// 🔴 GANTI DENGAN FIREBASE CONFIG ANDA
-const firebaseConfig = {
-  apiKey: "AIzaSyC_3DFpfBEwr7LVoYpfrHj5crtWqj9O2rk",
-  authDomain: "generator-angka-cloud.firebaseapp.com",
-  projectId: "generator-angka-cloud"
-};
-
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
-
-
-// ================= DEVICE LOCK SERVER =================
-async function checkDevice(user){
-
-  let deviceId = localStorage.getItem("device_id");
-
-  if(!deviceId){
-    deviceId = crypto.randomUUID();
-    localStorage.setItem("device_id", deviceId);
-  }
-
-  const ref = doc(db,"devices",user.uid);
-  const snap = await getDoc(ref);
-
-  if(!snap.exists()){
-    await setDoc(ref,{ deviceId: deviceId });
-    return true;
-  }
-
-  if(snap.data().deviceId !== deviceId){
-    alert("Akun sudah aktif di device lain!");
-    await signOut(auth);
-    return false;
-  }
-
-  return true;
-}
-
-
-// ================= LOGIN =================
-window.loginUser = async function(){
-
-  const email = document.getElementById("email").value;
-  const pass = document.getElementById("password").value;
-
-  try{
-    const cred = await signInWithEmailAndPassword(auth,email,pass);
-    const ok = await checkDevice(cred.user);
-    if(!ok) return;
-
-    document.getElementById("loginBox").style.display="none";
-    document.getElementById("appBox").style.display="block";
-
-  }catch(e){
-    alert("Login gagal!");
-  }
-}
-
-
-// ================= FINAL MASTER ENGINE =================
-function nextValue(current){
-
-    let last2 = current % 100;
-    let last3 = current % 1000;
-    let ribuan = Math.floor((current % 10000) / 1000);
-    let lastDigit = current % 10;
-
-    if (last3 >= 990 && last3 <= 993) return current + ((ribuan===4)?15:16);
-    if (last3 >= 994 && last3 <= 999) return current + ((ribuan===4)?5:6);
-
-    if (last2 >= 0 && last2 <= 2) return current + 18;
-    if (last2 >= 40 && last2 <= 42) return current + 17;
-    if (last2 >= 43 && last2 <= 49) return current + 7;
-    if (lastDigit === 0 || lastDigit === 1) return current + 18;
-
-    return current + 8;
-}
-
-function splitCode(code){
-    let match = code.match(/^(.*?)(\d+)$/);
-    if(!match) return null;
-    return { prefix: match[1], number: match[2] };
-}
-
-function pad(num,len){
-    return num.toString().padStart(len,'0');
-}
-
-let generatedData = [];
-
-window.generate = function(){
-
-    let inputs = document.getElementById("startVals").value.trim().split("\n");
-    let jumlah = Number(document.getElementById("jumlah").value);
-
-    generatedData = [];
-    let outputText = "";
-
-    for(let code of inputs){
-
-        let parts = splitCode(code.trim());
-        if(!parts) continue;
-
-        let prefix = parts.prefix;
-        let numStr = parts.number;
-        let len = numStr.length;
-        let current = parseInt(numStr);
-
-        for(let i=1;i<=jumlah;i++){
-            if(i>1) current = nextValue(current);
-            let full = prefix + pad(current,len);
-            generatedData.push([full]);
-            outputText += full + "\n";
-        }
-    }
-
-    document.getElementById("output").value = outputText;
-}
-
-window.copyAll = function(){
-    navigator.clipboard.writeText(document.getElementById("output").value);
-    alert("Semua hasil disalin!");
-}
-
-window.downloadXLSX = function(){
-    if(generatedData.length === 0){
-        alert("Tidak ada data");
-        return;
-    }
-    let wb = XLSX.utils.book_new();
-    let ws = XLSX.utils.aoa_to_sheet(generatedData);
-    XLSX.utils.book_append_sheet(wb, ws, "Data");
-    XLSX.writeFile(wb, "GENERATOR_CLOUD.xlsx");
-}
-
-</script>
-
-
 <style>
-body { font-family: Arial; padding:20px; background:#f4f6f9; }
-.container { background:white; padding:20px; border-radius:12px; max-width:900px; margin:auto; box-shadow:0 5px 20px rgba(0,0,0,0.1);}
-textarea { width:100%; height:250px; margin-top:10px; font-family:monospace; }
-input { padding:10px; width:100%; margin-bottom:10px; }
-button { padding:10px 18px; margin:5px 5px 5px 0; border:none; border-radius:6px; cursor:pointer; background:#1565c0; color:white;}
+body{font-family:Arial;background:#eef2f7;padding:20px;}
+.box{max-width:500px;margin:auto;background:#fff;padding:20px;border-radius:12px;}
+input,button{width:100%;padding:12px;margin-top:10px;font-size:16px;}
+.result{margin-top:15px;padding:15px;background:#e3f2fd;border-radius:8px;}
 </style>
-
 </head>
 <body>
 
-<div class="container">
-
-<h2>☁️ GENERATOR CLOUD ENTERPRISE</h2>
-
-<div id="loginBox">
-<input type="email" id="email" placeholder="Email">
-<input type="password" id="password" placeholder="Password">
-<button onclick="loginUser()">Login</button>
+<div class="box">
+<h2>🇮🇩 Cek NIK Indonesia (PRO)</h2>
+<input id="nik" placeholder="Masukkan NIK 16 digit">
+<button onclick="cek()">Cek</button>
+<div class="result" id="hasil">Hasil tampil di sini</div>
 </div>
 
-<div id="appBox" style="display:none;">
+<script>
+let data=[];
+fetch('data_full.json').then(r=>r.json()).then(j=>data=j);
 
-<label>Kode Awal:</label>
-<textarea id="startVals">07KJ0010005</textarea>
+function cek(){
+ let nik=document.getElementById('nik').value;
 
-<label>Jumlah:</label>
-<input type="number" id="jumlah" value="100">
+ if(nik.length!=16){
+   document.getElementById('hasil').innerHTML="NIK harus 16 digit";
+   return;
+ }
 
-<button onclick="generate()">Generate</button>
-<button onclick="copyAll()">Salin Semua</button>
-<button onclick="downloadXLSX()">Download XLSX</button>
+ let kode=nik.substring(0,6);
+ let tgl=nik.substring(6,8);
+ let bln=nik.substring(8,10);
+ let thn=nik.substring(10,12);
 
-<textarea id="output"></textarea>
+ let found=data.find(x=>x.kode===kode);
 
-</div>
-</div>
+ let jk = parseInt(tgl) > 40 ? "Perempuan" : "Laki-laki";
+ if(parseInt(tgl)>40){ tgl = tgl - 40; }
+
+ if(found){
+   document.getElementById('hasil').innerHTML=
+   "<b>Wilayah:</b><br>"+
+   found.prov+"<br>"+found.kab+"<br>"+found.kec+"<br><br>"+
+   "<b>Tanggal Lahir:</b> "+tgl+"-"+bln+"-"+thn+"<br>"+
+   "<b>Jenis Kelamin:</b> "+jk;
+ }else{
+   document.getElementById('hasil').innerHTML="Kode wilayah tidak ditemukan";
+ }
+}
+</script>
 
 </body>
 </html>
